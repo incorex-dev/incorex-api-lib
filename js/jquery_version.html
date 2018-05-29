@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>IncoreX API jQuery</title>
+    <div id="result">
+    </div>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+<script type="text/javascript">
+    var config = {
+        url: 'https://api.incorex.com/v1/',
+        key: 'YOUR_API_KEY',         //TODO replace with your api key from profile page
+        secret: 'YOUR_API_SECRET'    //TODO replace with your api secret from profile page
+    };
+
+    function init() {
+        config.nonce = new Date().getTime();
+    }
+
+    function sign(message){
+        return CryptoJS.HmacSHA512(message, config.secret).toString(CryptoJS.enc.hex);
+    }
+
+    function api_query(method_name, data, callback) {
+        data.nonce = config.nonce++;
+        var post_data = $.param( data );
+        $.ajax({
+            url: config.url + method_name,
+            type: 'post',
+            data: data,
+            headers: {
+                Key:  config.key,
+                Sign: sign(post_data)
+            },
+            dataType: 'json',
+            success: function (data) {
+                callback(data);
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        init();
+        api_query("user_info", {}, function(data){
+            console.log(data);
+            $("#result").append( "<p>"+JSON.stringify(data)+"</p>" );
+            api_query("user_trades", {pair:"BTC_USD", limit:100, offset:0}, function(data){
+              console.log(data);
+              $("#result").append( "<p>"+JSON.stringify(data)+"</p>" );
+            });
+        });
+    });
+</script>
+</body>
+</html>

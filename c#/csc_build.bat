@@ -1,0 +1,1 @@
+"c:\Program Files (x86)\MSBuild\12.0\Bin\csc.exe" Program.cs IncoreXApi.cs /reference:System.dll,System.Net.Http.dll

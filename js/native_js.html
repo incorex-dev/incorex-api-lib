@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title>IncoreX API</title>
+    <div id="result"></div>
+</head>
+<body onLoad="window_onload()">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/crypto-js.js"></script>
+<script type="text/javascript">
+    var config = {
+        url: 'https://api.incorex.com/v1/',
+        key: 'YOUR_API_KEY',         //TODO replace with your api key from profile page
+        secret: 'YOUR_API_SECRET'    //TODO replace with your api secret from profile page
+    };
+
+    function init() {
+        config.nonce = new Date().getTime();
+    }
+
+    function sign(message){
+        return CryptoJS.HmacSHA512(message, config.secret).toString(CryptoJS.enc.hex);
+    }
+
+    function serialize(obj) {
+        var str = [];
+        for(var p in obj)
+            if (obj.hasOwnProperty(p)) {
+                str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+            }
+        return str.join("&");
+    }
+
+
+    function api_query(method_name, data, callback){
+        data.nonce = config.nonce++;
+        var xhttp = new XMLHttpRequest();
+
+        xhttp.onreadystatechange = function() {
+            if (xhttp.readyState == 4 && xhttp.status == 200) {
+                callback(xhttp.responseText);
+            }
+        };
+        var post_data = serialize(data);
+
+        xhttp.open("POST", config.url + method_name, true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded; charset=UTF-8index.html");
+        xhttp.setRequestHeader("Key", config.key);
+        xhttp.setRequestHeader("Sign", sign(post_data));
+        xhttp.send(post_data);
+    }
+
+    function window_onload() {
+        init();
+        var div = document.getElementById("result");
+        api_query("user_info", {}, function(data){
+            console.log(data);
+            div.innerHTML += '<p>' + JSON.stringify(data)+ '</p>';
+            
+            api_query("user_trades", {pair:"BTC_USD", limit:100, offset:0}, function(data){
+                console.log(data);
+                div.innerHTML += '<p>' + JSON.stringify(data)+ '</p>';
+            });
+        });
+    }
+</script>
+</body>
+</html>
